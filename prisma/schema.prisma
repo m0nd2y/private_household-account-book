@@ -1,0 +1,130 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id        String          @id @default(cuid())
+  name      String
+  type      String          // INCOME | EXPENSE
+  icon      String?
+  color     String?
+  isDefault Boolean         @default(false)
+  parentId  String?
+  parent    Category?       @relation("SubCategories", fields: [parentId], references: [id])
+  children  Category[]      @relation("SubCategories")
+  createdAt DateTime        @default(now())
+
+  transactions Transaction[]
+  budgets      Budget[]
+}
+
+model PaymentMethod {
+  id          String   @id @default(cuid())
+  name        String
+  type        String   // CREDIT_CARD | DEBIT_CARD | CASH | BANK_TRANSFER | E_WALLET
+  cardCompany String?
+  paymentDay  Int?
+  creditLimit Int?
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  transactions Transaction[]
+}
+
+model Transaction {
+  id              String         @id @default(cuid())
+  amount          Int
+  type            String         // INCOME | EXPENSE
+  description     String?
+  memo            String?
+  date            DateTime
+  categoryId      String
+  category        Category       @relation(fields: [categoryId], references: [id])
+  paymentMethodId String?
+  paymentMethod   PaymentMethod? @relation(fields: [paymentMethodId], references: [id])
+  tags            Tag[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model Budget {
+  id         String    @id @default(cuid())
+  amount     Int
+  month      Int
+  year       Int
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id])
+  createdAt  DateTime  @default(now())
+
+  @@unique([month, year, categoryId])
+}
+
+model RecurringTransaction {
+  id              String   @id @default(cuid())
+  amount          Int
+  type            String   // INCOME | EXPENSE
+  description     String
+  frequency       String   // DAILY | WEEKLY | MONTHLY | YEARLY
+  dayOfMonth      Int?
+  dayOfWeek       Int?
+  startDate       DateTime
+  endDate         DateTime?
+  isActive        Boolean  @default(true)
+  categoryId      String
+  paymentMethodId String?
+  createdAt       DateTime @default(now())
+}
+
+model Tag {
+  id           String        @id @default(cuid())
+  name         String        @unique
+  transactions Transaction[]
+}
+
+model Asset {
+  id             String             @id @default(cuid())
+  name           String
+  type           String             // DEPOSIT | SAVINGS | INVESTMENT | CRYPTO | PENSION_INSURANCE
+  institution    String?
+  accountNumber  String?
+  interestRate   Float?
+  maturityDate   DateTime?
+  memo           String?
+  currentValue   Int                @default(0)
+  initialAmount  Int                @default(0)
+  isActive       Boolean            @default(true)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  transactions   AssetTransaction[]
+  snapshots      AssetSnapshot[]
+}
+
+model AssetTransaction {
+  id        String   @id @default(cuid())
+  assetId   String
+  asset     Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  type      String   // BUY | SELL | DEPOSIT | WITHDRAW | INTEREST | DIVIDEND
+  amount    Int
+  quantity  Float?
+  unitPrice Float?
+  date      DateTime
+  memo      String?
+  createdAt DateTime @default(now())
+}
+
+model AssetSnapshot {
+  id        String   @id @default(cuid())
+  assetId   String
+  asset     Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  value     Int
+  date      DateTime
+  createdAt DateTime @default(now())
+
+  @@unique([assetId, date])
+}
