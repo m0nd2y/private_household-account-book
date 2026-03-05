@@ -21,14 +21,27 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Minus,
+  CalendarCheck,
 } from "lucide-react"
+
+interface FixedCostsSummary {
+  total: number
+  paid: number
+  expectedTotal: number
+  paidTotal: number
+  unpaidNames: string[]
+}
 
 interface SummaryData {
   totalIncome: number
   totalExpense: number
   balance: number
+  transactionExpense?: number
+  fixedCostExpense?: number
+  fixedCostSaving?: number
   previousMonthIncome: number
   previousMonthExpense: number
+  fixedCosts?: FixedCostsSummary
 }
 
 interface CategoryData {
@@ -279,6 +292,11 @@ export default function DashboardPage() {
             <div className="text-2xl font-bold text-red-600 dark:text-red-400">
               {formatCurrency(summary?.totalExpense || 0)}
             </div>
+            {(summary?.fixedCostExpense ?? 0) > 0 && (
+              <div className="mt-1 text-xs text-muted-foreground">
+                변동 {formatCurrency(summary?.transactionExpense || 0)} + 고정 {formatCurrency(summary?.fixedCostExpense || 0)}
+              </div>
+            )}
             <div className="mt-1 flex items-center text-xs text-muted-foreground">
               {expenseChange > 0 ? (
                 <ArrowUpRight className="mr-1 h-3 w-3 text-red-500" />
@@ -370,6 +388,62 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Fixed Costs Widget */}
+      {summary?.fixedCosts && summary.fixedCosts.total > 0 && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-base">고정비용 현황</CardTitle>
+            <div className="rounded-lg bg-orange-100 p-2 dark:bg-orange-900/30">
+              <CalendarCheck className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm">
+                {summary.fixedCosts.total}개 중{" "}
+                <span className="font-semibold text-green-600">
+                  {summary.fixedCosts.paid}개
+                </span>{" "}
+                납부 완료
+              </span>
+              <span className="text-sm text-muted-foreground">
+                {summary.fixedCosts.total > 0
+                  ? Math.round(
+                      (summary.fixedCosts.paid / summary.fixedCosts.total) * 100
+                    )
+                  : 0}
+                %
+              </span>
+            </div>
+            <Progress
+              value={
+                summary.fixedCosts.total > 0
+                  ? Math.round(
+                      (summary.fixedCosts.paid / summary.fixedCosts.total) * 100
+                    )
+                  : 0
+              }
+              className="h-2 mb-3"
+            />
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">
+                납부: {formatCurrency(summary.fixedCosts.paidTotal)} /{" "}
+                {formatCurrency(summary.fixedCosts.expectedTotal)}
+              </span>
+            </div>
+            {summary.fixedCosts.unpaidNames.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1">
+                {summary.fixedCosts.unpaidNames.map((name) => (
+                  <Badge key={name} variant="secondary" className="text-xs text-orange-600">
+                    {name}
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Recent Transactions */}
       <Card>

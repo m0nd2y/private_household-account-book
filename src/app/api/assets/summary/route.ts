@@ -21,15 +21,38 @@ export async function GET(request: NextRequest) {
     })
     const monthlyIncome = incomeAgg._sum.amount || 0
 
-    // Monthly expense from Transaction table
-    const expenseAgg = await prisma.transaction.aggregate({
+    // Monthly expense from Transaction table + Fixed cost EXPENSE payments only
+    const [expenseAgg, fixedExpenseAgg] = await Promise.all([
+      prisma.transaction.aggregate({
+        where: {
+          type: "EXPENSE",
+          date: { gte: startDate, lt: endDate },
+        },
+        _sum: { amount: true },
+      }),
+      prisma.fixedCostPayment.aggregate({
+        where: {
+          year,
+          month,
+          isPaid: true,
+          fixedCost: { costType: "EXPENSE" },
+        },
+        _sum: { actualAmount: true },
+      }),
+    ])
+    const monthlyExpense = (expenseAgg._sum.amount || 0) + (fixedExpenseAgg._sum.actualAmount || 0)
+
+    // Fixed cost SAVING payments count as allocation
+    const fixedSavingAgg = await prisma.fixedCostPayment.aggregate({
       where: {
-        type: "EXPENSE",
-        date: { gte: startDate, lt: endDate },
+        year,
+        month,
+        isPaid: true,
+        fixedCost: { costType: "SAVING" },
       },
-      _sum: { amount: true },
+      _sum: { actualAmount: true },
     })
-    const monthlyExpense = expenseAgg._sum.amount || 0
+    const fixedSavingAmount = fixedSavingAgg._sum.actualAmount || 0
 
     // Monthly allocation: BUY + DEPOSIT type AssetTransactions
     const allocationAgg = await prisma.assetTransaction.aggregate({
@@ -39,7 +62,7 @@ export async function GET(request: NextRequest) {
       },
       _sum: { amount: true },
     })
-    const monthlyAllocation = allocationAgg._sum.amount || 0
+    const monthlyAllocation = (allocationAgg._sum.amount || 0) + fixedSavingAmount
 
     const allocationRate = monthlyIncome > 0
       ? Math.round((monthlyAllocation / monthlyIncome) * 10000) / 100

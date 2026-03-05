@@ -50,6 +50,7 @@ export const NAV_ITEMS = [
   { href: "/payment-methods", label: "결제수단", icon: "CreditCard" },
   { href: "/budget", label: "예산 관리", icon: "PiggyBank" },
   { href: "/recurring", label: "정기 거래", icon: "Repeat" },
+  { href: "/fixed-costs", label: "고정비용", icon: "CalendarCheck" },
   { href: "/assets", label: "자산 관리", icon: "Landmark" },
   { href: "/statistics", label: "통계", icon: "BarChart3" },
   { href: "/settings", label: "설정", icon: "Settings" },

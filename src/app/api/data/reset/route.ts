@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma"
 
 export async function POST() {
   try {
+    await prisma.fixedCostPayment.deleteMany({})
+    await prisma.fixedCost.deleteMany({})
     await prisma.assetSnapshot.deleteMany({})
     await prisma.assetTransaction.deleteMany({})
     await prisma.asset.deleteMany({})

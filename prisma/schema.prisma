@@ -128,3 +128,32 @@ model AssetSnapshot {
 
   @@unique([assetId, date])
 }
+
+model FixedCost {
+  id             String             @id @default(cuid())
+  name           String
+  expectedAmount Int
+  category       String    @default("ETC")  // HOUSING | UTILITY | TELECOM | SUBSCRIPTION | INSURANCE | TRANSPORT | FINANCE | ETC
+  costType       String    @default("EXPENSE")  // EXPENSE | SAVING
+  dueDay         Int?
+  memo           String?
+  isActive       Boolean            @default(true)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  payments       FixedCostPayment[]
+}
+
+model FixedCostPayment {
+  id           String    @id @default(cuid())
+  fixedCostId  String
+  fixedCost    FixedCost @relation(fields: [fixedCostId], references: [id], onDelete: Cascade)
+  year         Int
+  month        Int
+  isPaid       Boolean   @default(false)
+  actualAmount Int?
+  paidAt       DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@unique([fixedCostId, year, month])
+}

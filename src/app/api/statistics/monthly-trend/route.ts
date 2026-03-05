@@ -12,16 +12,29 @@ export async function GET(request: NextRequest) {
     const startDate = new Date(year, 0, 1)
     const endDate = new Date(year, 11, 31, 23, 59, 59)
 
-    const transactions = await prisma.transaction.findMany({
-      where: {
-        date: { gte: startDate, lte: endDate },
-      },
-      select: {
-        amount: true,
-        type: true,
-        date: true,
-      },
-    })
+    const [transactions, fixedCostPayments] = await Promise.all([
+      prisma.transaction.findMany({
+        where: {
+          date: { gte: startDate, lte: endDate },
+        },
+        select: {
+          amount: true,
+          type: true,
+          date: true,
+        },
+      }),
+      prisma.fixedCostPayment.findMany({
+        where: {
+          year,
+          isPaid: true,
+          fixedCost: { costType: "EXPENSE" },
+        },
+        select: {
+          month: true,
+          actualAmount: true,
+        },
+      }),
+    ])
 
     // Aggregate by month
     const monthlyData: { month: number; income: number; expense: number }[] = []
@@ -36,11 +49,15 @@ export async function GET(request: NextRequest) {
         .filter((t) => t.type === "INCOME")
         .reduce((sum, t) => sum + t.amount, 0)
 
-      const expense = monthTransactions
+      const transactionExpense = monthTransactions
         .filter((t) => t.type === "EXPENSE")
         .reduce((sum, t) => sum + t.amount, 0)
 
-      monthlyData.push({ month: m, income, expense })
+      const fixedCostExpense = fixedCostPayments
+        .filter((p) => p.month === m)
+        .reduce((sum, p) => sum + (p.actualAmount || 0), 0)
+
+      monthlyData.push({ month: m, income, expense: transactionExpense + fixedCostExpense })
     }
 
     return NextResponse.json(monthlyData)

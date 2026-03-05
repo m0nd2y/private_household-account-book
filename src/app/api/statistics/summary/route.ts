@@ -57,18 +57,82 @@ export async function GET(request: NextRequest) {
       }),
     ])
 
-    const totalIncome = currentIncome._sum.amount || 0
-    const totalExpense = currentExpense._sum.amount || 0
-    const balance = totalIncome - totalExpense
+    const transactionIncome = currentIncome._sum.amount || 0
+    const transactionExpense = currentExpense._sum.amount || 0
     const previousMonthIncome = previousIncome._sum.amount || 0
     const previousMonthExpense = previousExpense._sum.amount || 0
+
+    // Fixed costs summary (with costType awareness)
+    const activeFixedCosts = await prisma.fixedCost.findMany({
+      where: { isActive: true },
+    })
+    const fixedCostPayments = await prisma.fixedCostPayment.findMany({
+      where: { year, month, isPaid: true },
+      include: { fixedCost: { select: { costType: true } } },
+    })
+
+    const fixedCostsTotal = activeFixedCosts.length
+    const fixedCostsPaid = fixedCostPayments.length
+    const fixedCostsExpectedTotal = activeFixedCosts.reduce(
+      (sum, fc) => sum + fc.expectedAmount,
+      0
+    )
+    const fixedCostsPaidTotal = fixedCostPayments.reduce(
+      (sum, p) => sum + (p.actualAmount || 0),
+      0
+    )
+    const fixedCostsUnpaidNames = activeFixedCosts
+      .filter(
+        (fc) => !fixedCostPayments.some((p) => p.fixedCostId === fc.id)
+      )
+      .map((fc) => fc.name)
+
+    // Split by costType: EXPENSE vs SAVING
+    const fixedExpensePayments = fixedCostPayments.filter(
+      (p) => p.fixedCost.costType === "EXPENSE"
+    )
+    const fixedSavingPayments = fixedCostPayments.filter(
+      (p) => p.fixedCost.costType === "SAVING"
+    )
+    const fixedExpenseTotal = fixedExpensePayments.reduce(
+      (sum, p) => sum + (p.actualAmount || 0),
+      0
+    )
+    const fixedSavingTotal = fixedSavingPayments.reduce(
+      (sum, p) => sum + (p.actualAmount || 0),
+      0
+    )
+
+    // Previous month fixed cost payments (expense only)
+    const prevFixedCostPayments = await prisma.fixedCostPayment.findMany({
+      where: { year: prevYear, month: prevMonth, isPaid: true },
+      include: { fixedCost: { select: { costType: true } } },
+    })
+    const prevFixedExpenseTotal = prevFixedCostPayments
+      .filter((p) => p.fixedCost.costType === "EXPENSE")
+      .reduce((sum, p) => sum + (p.actualAmount || 0), 0)
+
+    // Combined totals: only EXPENSE type fixed costs count as expense
+    const totalIncome = transactionIncome
+    const totalExpense = transactionExpense + fixedExpenseTotal
+    const balance = totalIncome - totalExpense
 
     return NextResponse.json({
       totalIncome,
       totalExpense,
       balance,
+      transactionExpense,
+      fixedCostExpense: fixedExpenseTotal,
+      fixedCostSaving: fixedSavingTotal,
       previousMonthIncome,
-      previousMonthExpense,
+      previousMonthExpense: previousMonthExpense + prevFixedExpenseTotal,
+      fixedCosts: {
+        total: fixedCostsTotal,
+        paid: fixedCostsPaid,
+        expectedTotal: fixedCostsExpectedTotal,
+        paidTotal: fixedCostsPaidTotal,
+        unpaidNames: fixedCostsUnpaidNames,
+      },
     })
   } catch (error) {
     console.error("Failed to fetch summary:", error)

@@ -60,3 +60,31 @@ export const ASSET_TRANSACTION_TYPE_LABELS: Record<AssetTransactionType, string>
   INTEREST: "이자",
   DIVIDEND: "배당",
 }
+
+export type FixedCostCategory =
+  | "HOUSING"
+  | "UTILITY"
+  | "TELECOM"
+  | "SUBSCRIPTION"
+  | "INSURANCE"
+  | "TRANSPORT"
+  | "FINANCE"
+  | "ETC"
+
+export const FIXED_COST_CATEGORY_LABELS: Record<FixedCostCategory, string> = {
+  HOUSING: "주거",
+  UTILITY: "공과금",
+  TELECOM: "통신",
+  SUBSCRIPTION: "구독",
+  INSURANCE: "보험",
+  TRANSPORT: "교통",
+  FINANCE: "금융",
+  ETC: "기타",
+}
+
+export type FixedCostType = "EXPENSE" | "SAVING"
+
+export const FIXED_COST_TYPE_LABELS: Record<FixedCostType, string> = {
+  EXPENSE: "지출",
+  SAVING: "저축/투자",
+}
