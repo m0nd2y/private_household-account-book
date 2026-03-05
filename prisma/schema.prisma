@@ -43,10 +43,10 @@ model Transaction {
   description     String?
   memo            String?
   date            DateTime
-  categoryId      String
-  category        Category       @relation(fields: [categoryId], references: [id])
+  categoryId      String?
+  category        Category?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   paymentMethodId String?
-  paymentMethod   PaymentMethod? @relation(fields: [paymentMethodId], references: [id])
+  paymentMethod   PaymentMethod? @relation(fields: [paymentMethodId], references: [id], onDelete: SetNull)
   tags            Tag[]
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
@@ -58,7 +58,7 @@ model Budget {
   month      Int
   year       Int
   categoryId String?
-  category   Category? @relation(fields: [categoryId], references: [id])
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   createdAt  DateTime  @default(now())
 
   @@unique([month, year, categoryId])
@@ -107,8 +107,8 @@ model Asset {
 
 model AssetTransaction {
   id        String   @id @default(cuid())
-  assetId   String
-  asset     Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  assetId   String?
+  asset     Asset?   @relation(fields: [assetId], references: [id], onDelete: SetNull)
   type      String   // BUY | SELL | DEPOSIT | WITHDRAW | INTEREST | DIVIDEND
   amount    Int
   quantity  Float?
@@ -120,8 +120,8 @@ model AssetTransaction {
 
 model AssetSnapshot {
   id        String   @id @default(cuid())
-  assetId   String
-  asset     Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  assetId   String?
+  asset     Asset?   @relation(fields: [assetId], references: [id], onDelete: SetNull)
   value     Int
   date      DateTime
   createdAt DateTime @default(now())
@@ -146,8 +146,8 @@ model FixedCost {
 
 model FixedCostPayment {
   id           String    @id @default(cuid())
-  fixedCostId  String
-  fixedCost    FixedCost @relation(fields: [fixedCostId], references: [id], onDelete: Cascade)
+  fixedCostId  String?
+  fixedCost    FixedCost? @relation(fields: [fixedCostId], references: [id], onDelete: SetNull)
   year         Int
   month        Int
   isPaid       Boolean   @default(false)

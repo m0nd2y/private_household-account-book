@@ -89,10 +89,10 @@ export async function GET(request: NextRequest) {
 
     // Split by costType: EXPENSE vs SAVING
     const fixedExpensePayments = fixedCostPayments.filter(
-      (p) => p.fixedCost.costType === "EXPENSE"
+      (p) => p.fixedCost?.costType === "EXPENSE"
     )
     const fixedSavingPayments = fixedCostPayments.filter(
-      (p) => p.fixedCost.costType === "SAVING"
+      (p) => p.fixedCost?.costType === "SAVING"
     )
     const fixedExpenseTotal = fixedExpensePayments.reduce(
       (sum, p) => sum + (p.actualAmount || 0),
@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
       include: { fixedCost: { select: { costType: true } } },
     })
     const prevFixedExpenseTotal = prevFixedCostPayments
-      .filter((p) => p.fixedCost.costType === "EXPENSE")
+      .filter((p) => p.fixedCost?.costType === "EXPENSE")
       .reduce((sum, p) => sum + (p.actualAmount || 0), 0)
 
     // Combined totals: only EXPENSE type fixed costs count as expense

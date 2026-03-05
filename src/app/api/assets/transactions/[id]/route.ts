@@ -74,19 +74,18 @@ export async function DELETE(
       valueChange = existing.amount
     }
 
-    await prisma.$transaction([
-      prisma.assetTransaction.delete({
-        where: { id },
-      }),
-      prisma.asset.update({
-        where: { id: existing.assetId },
-        data: {
-          currentValue: {
-            increment: valueChange,
-          },
-        },
-      }),
-    ])
+    const ops = [
+      prisma.assetTransaction.delete({ where: { id } }),
+    ]
+    if (existing.assetId) {
+      ops.push(
+        prisma.asset.update({
+          where: { id: existing.assetId },
+          data: { currentValue: { increment: valueChange } },
+        }) as never
+      )
+    }
+    await prisma.$transaction(ops)
 
     return NextResponse.json({ message: "자산 거래가 삭제되었습니다" })
   } catch (error) {

@@ -37,8 +37,8 @@ export async function GET(request: NextRequest) {
       assetId: snapshot.assetId,
       date: snapshot.date,
       value: snapshot.value,
-      assetName: snapshot.asset.name,
-      assetType: snapshot.asset.type,
+      assetName: snapshot.asset?.name ?? "(삭제된 자산)",
+      assetType: snapshot.asset?.type ?? "",
     }))
 
     return NextResponse.json({ data })

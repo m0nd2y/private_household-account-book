@@ -79,6 +79,7 @@ export async function GET(request: NextRequest) {
 
     const byTypeMap: Record<string, { amount: number; count: number }> = {}
     for (const tx of txWithAsset) {
+      if (!tx.asset) continue
       const aType = tx.asset.type
       if (!byTypeMap[aType]) {
         byTypeMap[aType] = { amount: 0, count: 0 }

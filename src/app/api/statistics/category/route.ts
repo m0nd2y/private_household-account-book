@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Get category details
-    const categoryIds = grouped.map((g) => g.categoryId)
+    const categoryIds = grouped.map((g) => g.categoryId).filter((id): id is string => id !== null)
     const categories = await prisma.category.findMany({
       where: { id: { in: categoryIds } },
     })
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     )
 
     const result = grouped.map((g) => {
-      const category = categoryMap.get(g.categoryId)
+      const category = g.categoryId ? categoryMap.get(g.categoryId) : null
       const total = g._sum.amount || 0
       return {
         categoryId: g.categoryId,

@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
       const byType: Record<string, number> = {}
       for (const tx of txWithAsset) {
         allocation += tx.amount
+        if (!tx.asset) continue
         const aType = tx.asset.type
         byType[aType] = (byType[aType] || 0) + tx.amount
       }

@@ -56,24 +56,12 @@ export async function DELETE(
 
     const existing = await prisma.paymentMethod.findUnique({
       where: { id },
-      include: {
-        _count: {
-          select: { transactions: true },
-        },
-      },
     })
 
     if (!existing) {
       return NextResponse.json(
         { error: "결제수단을 찾을 수 없습니다." },
         { status: 404 }
-      )
-    }
-
-    if (existing._count.transactions > 0) {
-      return NextResponse.json(
-        { error: "해당 결제수단에 연결된 거래가 있어 삭제할 수 없습니다." },
-        { status: 400 }
       )
     }
 
