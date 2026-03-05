@@ -573,9 +573,6 @@ export default function TransactionsPage() {
                         </TableCell>
                         <TableCell>
                           <span className="inline-flex items-center gap-1">
-                            {tx.category.icon && (
-                              <span>{tx.category.icon}</span>
-                            )}
                             {tx.category.name}
                           </span>
                         </TableCell>
@@ -656,9 +653,6 @@ export default function TransactionsPage() {
                           {TRANSACTION_TYPE_LABELS[tx.type]}
                         </Badge>
                         <span className="text-sm font-medium truncate">
-                          {tx.category.icon && (
-                            <span className="mr-1">{tx.category.icon}</span>
-                          )}
                           {tx.category.name}
                         </span>
                       </div>

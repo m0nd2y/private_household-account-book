@@ -211,7 +211,7 @@ export function TransactionForm({
                   <Calendar
                     mode="single"
                     selected={field.value}
-                    onSelect={field.onChange}
+                    onSelect={(date) => date && field.onChange(date)}
                     initialFocus
                   />
                 </PopoverContent>
@@ -234,11 +234,15 @@ export function TransactionForm({
                     ₩
                   </span>
                   <Input
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
                     placeholder="0"
                     className="pl-8"
-                    {...field}
-                    onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                    value={field.value || ""}
+                    onChange={(e) => {
+                      const v = e.target.value.replace(/[^0-9]/g, "");
+                      field.onChange(v === "" ? 0 : parseInt(v, 10));
+                    }}
                   />
                 </div>
               </FormControl>
@@ -274,7 +278,6 @@ export function TransactionForm({
                   ) : (
                     filteredCategories.map((category) => (
                       <SelectItem key={category.id} value={category.id}>
-                        {category.icon ? `${category.icon} ` : ""}
                         {category.name}
                       </SelectItem>
                     ))
