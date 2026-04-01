@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     const prevEndDate = new Date(prevYear, prevMonth, 0, 23, 59, 59)
 
     // Current month totals
-    const [currentIncome, currentExpense] = await Promise.all([
+    const [currentIncome, currentExpense, currentDiscount] = await Promise.all([
       prisma.transaction.aggregate({
         where: {
           type: "INCOME",
@@ -37,7 +37,16 @@ export async function GET(request: NextRequest) {
         },
         _sum: { amount: true },
       }),
+      prisma.transaction.aggregate({
+        where: {
+          date: { gte: startDate, lte: endDate },
+          discountAmount: { gt: 0 },
+        },
+        _sum: { discountAmount: true },
+      }),
     ])
+
+    const totalDiscount = currentDiscount._sum.discountAmount || 0
 
     // Previous month totals
     const [previousIncome, previousExpense] = await Promise.all([
@@ -121,6 +130,7 @@ export async function GET(request: NextRequest) {
       totalIncome,
       totalExpense,
       balance,
+      totalDiscount,
       transactionExpense,
       fixedCostExpense: fixedExpenseTotal,
       fixedCostSaving: fixedSavingTotal,

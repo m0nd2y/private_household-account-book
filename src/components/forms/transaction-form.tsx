@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Calendar } from "@/components/ui/calendar"
+import { Switch } from "@/components/ui/switch"
 import {
   Form,
   FormControl,
@@ -77,6 +78,9 @@ export function TransactionForm({
   const [categories, setCategories] = useState<Category[]>([])
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([])
   const [loadingData, setLoadingData] = useState(true)
+  const [discountEnabled, setDiscountEnabled] = useState(false)
+  const [discountType, setDiscountType] = useState<"percent" | "amount">("percent")
+  const [discountValue, setDiscountValue] = useState("")
 
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionCreateSchema) as Resolver<TransactionFormValues>,
@@ -120,8 +124,9 @@ export function TransactionForm({
     fetchData()
   }, [])
 
-  // Reset categoryId when type changes
+  // Reset categoryId when type changes (only after categories are loaded)
   useEffect(() => {
+    if (loadingData) return
     const currentCategoryId = form.getValues("categoryId")
     if (currentCategoryId) {
       const categoryStillValid = filteredCategories.some(
@@ -132,10 +137,28 @@ export function TransactionForm({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedType])
+  }, [selectedType, loadingData])
+
+  function getDiscountedAmount(amount: number): number {
+    if (!discountEnabled || !discountValue) return amount
+    const v = parseFloat(discountValue)
+    if (isNaN(v) || v <= 0) return amount
+    if (discountType === "percent") {
+      return Math.round(amount * (1 - v / 100))
+    }
+    return Math.max(0, amount - v)
+  }
 
   async function handleSubmit(data: TransactionFormValues) {
-    await onSubmit(data)
+    const originalAmount = data.amount
+    const discountedAmount = getDiscountedAmount(originalAmount)
+    const discount = originalAmount - discountedAmount
+    const finalData = {
+      ...data,
+      amount: discountedAmount,
+      discountAmount: discount > 0 ? discount : 0,
+    }
+    await onSubmit(finalData)
   }
 
   return (
@@ -250,6 +273,69 @@ export function TransactionForm({
             </FormItem>
           )}
         />
+
+        {/* Discount */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium">할인 적용</label>
+            <Switch
+              checked={discountEnabled}
+              onCheckedChange={(checked) => {
+                setDiscountEnabled(checked)
+                if (!checked) setDiscountValue("")
+              }}
+            />
+          </div>
+          {discountEnabled && (
+            <div className="flex gap-2">
+              <div className="flex rounded-md border overflow-hidden">
+                <button
+                  type="button"
+                  className={cn(
+                    "px-3 py-1.5 text-sm transition-colors",
+                    discountType === "percent"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted hover:bg-muted/80"
+                  )}
+                  onClick={() => setDiscountType("percent")}
+                >
+                  %
+                </button>
+                <button
+                  type="button"
+                  className={cn(
+                    "px-3 py-1.5 text-sm transition-colors",
+                    discountType === "amount"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted hover:bg-muted/80"
+                  )}
+                  onClick={() => setDiscountType("amount")}
+                >
+                  원
+                </button>
+              </div>
+              <Input
+                type="text"
+                inputMode="numeric"
+                placeholder={discountType === "percent" ? "할인율" : "할인 금액"}
+                value={discountValue}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/[^0-9]/g, "")
+                  setDiscountValue(v)
+                }}
+                className="flex-1"
+              />
+            </div>
+          )}
+          {discountEnabled && discountValue && form.watch("amount") > 0 && (
+            <p className="text-sm text-muted-foreground">
+              할인 적용 금액:{" "}
+              <span className="font-medium text-foreground">
+                {getDiscountedAmount(form.watch("amount")).toLocaleString()}원
+              </span>
+            </p>
+          )}
+        </div>
 
         {/* Category */}
         <FormField

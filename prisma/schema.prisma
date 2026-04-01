@@ -39,6 +39,7 @@ model PaymentMethod {
 model Transaction {
   id              String         @id @default(cuid())
   amount          Int
+  discountAmount  Int            @default(0)
   type            String         // INCOME | EXPENSE
   description     String?
   memo            String?

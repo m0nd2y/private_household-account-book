@@ -22,6 +22,7 @@ import {
   ArrowDownRight,
   Minus,
   CalendarCheck,
+  Tag,
 } from "lucide-react"
 
 interface FixedCostsSummary {
@@ -36,6 +37,7 @@ interface SummaryData {
   totalIncome: number
   totalExpense: number
   balance: number
+  totalDiscount?: number
   transactionExpense?: number
   fixedCostExpense?: number
   fixedCostSaving?: number
@@ -365,6 +367,26 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Discount Card */}
+      {(summary?.totalDiscount ?? 0) > 0 && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">이번 달 할인 금액</CardTitle>
+            <div className="rounded-lg bg-amber-100 p-2 dark:bg-amber-900/30">
+              <Tag className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+              {formatCurrency(summary?.totalDiscount || 0)}
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              할인 적용으로 절약한 금액
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Charts Section */}
       <div className="grid gap-6 lg:grid-cols-2">
