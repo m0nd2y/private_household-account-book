@@ -19,6 +19,7 @@ const DEFAULT_CATEGORIES = [
   { name: "문화/여가", type: "EXPENSE", icon: "Film", color: "#14B8A6" },
   { name: "쇼핑", type: "EXPENSE", icon: "ShoppingBag", color: "#06B6D4" },
   { name: "금융", type: "EXPENSE", icon: "Building2", color: "#3B82F6" },
+  { name: "술", type: "EXPENSE", icon: "Wine", color: "#A855F7" },
   { name: "경조사", type: "EXPENSE", icon: "Users", color: "#8B5CF6" },
   { name: "기타 지출", type: "EXPENSE", icon: "MoreHorizontal", color: "#6B7280" },
 ]

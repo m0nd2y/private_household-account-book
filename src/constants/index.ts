@@ -26,6 +26,7 @@ export const DEFAULT_EXPENSE_CATEGORIES: DefaultCategory[] = [
   { name: "문화/여가", type: "EXPENSE", icon: "Film", color: "#14B8A6" },
   { name: "쇼핑", type: "EXPENSE", icon: "ShoppingBag", color: "#06B6D4" },
   { name: "금융", type: "EXPENSE", icon: "Building2", color: "#3B82F6" },
+  { name: "술", type: "EXPENSE", icon: "Wine", color: "#A855F7" },
   { name: "경조사", type: "EXPENSE", icon: "Users", color: "#8B5CF6" },
   { name: "기타 지출", type: "EXPENSE", icon: "MoreHorizontal", color: "#6B7280" },
 ]
@@ -48,9 +49,6 @@ export const NAV_ITEMS = [
   { href: "/transactions", label: "거래 관리", icon: "ArrowLeftRight" },
   { href: "/categories", label: "카테고리", icon: "Tag" },
   { href: "/payment-methods", label: "결제수단", icon: "CreditCard" },
-  { href: "/budget", label: "예산 관리", icon: "PiggyBank" },
-  { href: "/recurring", label: "정기거래 / 수입", icon: "Repeat" },
-  { href: "/fixed-costs", label: "고정비용 / 지출", icon: "CalendarCheck" },
   { href: "/assets", label: "자산 관리", icon: "Landmark" },
   { href: "/statistics", label: "통계", icon: "BarChart3" },
   { href: "/settings", label: "설정", icon: "Settings" },

@@ -46,12 +46,6 @@ interface Category {
   color?: string | null
 }
 
-interface PaymentMethod {
-  id: string
-  name: string
-  type: string
-}
-
 interface TransactionFormProps {
   initialData?: {
     id: string
@@ -64,6 +58,7 @@ interface TransactionFormProps {
     paymentMethodId?: string | null
     tags?: { id: string; name: string }[]
   }
+  defaultDate?: Date
   onSubmit: (data: TransactionFormValues) => Promise<void>
   onCancel?: () => void
   isLoading?: boolean
@@ -71,12 +66,12 @@ interface TransactionFormProps {
 
 export function TransactionForm({
   initialData,
+  defaultDate,
   onSubmit,
   onCancel,
   isLoading = false,
 }: TransactionFormProps) {
   const [categories, setCategories] = useState<Category[]>([])
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([])
   const [loadingData, setLoadingData] = useState(true)
   const [discountEnabled, setDiscountEnabled] = useState(false)
   const [discountType, setDiscountType] = useState<"percent" | "amount">("percent")
@@ -89,7 +84,7 @@ export function TransactionForm({
       amount: initialData?.amount || 0,
       description: initialData?.description || "",
       memo: initialData?.memo || "",
-      date: initialData?.date ? new Date(initialData.date) : new Date(),
+      date: initialData?.date ? new Date(initialData.date) : (defaultDate || new Date()),
       categoryId: initialData?.categoryId || "",
       paymentMethodId: initialData?.paymentMethodId || "",
       tagNames: initialData?.tags?.map((t) => t.name) || [],
@@ -103,17 +98,10 @@ export function TransactionForm({
   useEffect(() => {
     async function fetchData() {
       try {
-        const [catRes, pmRes] = await Promise.all([
-          fetch("/api/categories"),
-          fetch("/api/payment-methods"),
-        ])
+        const catRes = await fetch("/api/categories")
         if (catRes.ok) {
           const catData = await catRes.json()
           setCategories(Array.isArray(catData) ? catData : catData.data || [])
-        }
-        if (pmRes.ok) {
-          const pmData = await pmRes.json()
-          setPaymentMethods(Array.isArray(pmData) ? pmData : pmData.data || [])
         }
       } catch (error) {
         console.error("Failed to fetch form data:", error)
@@ -368,40 +356,6 @@ export function TransactionForm({
                       </SelectItem>
                     ))
                   )}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Payment Method */}
-        <FormField
-          control={form.control}
-          name="paymentMethodId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>결제수단</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                value={field.value || ""}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue
-                      placeholder={
-                        loadingData ? "불러오는 중..." : "결제수단 선택 (선택사항)"
-                      }
-                    />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="none">선택 안함</SelectItem>
-                  {paymentMethods.map((pm) => (
-                    <SelectItem key={pm.id} value={pm.id}>
-                      {pm.name}
-                    </SelectItem>
-                  ))}
                 </SelectContent>
               </Select>
               <FormMessage />

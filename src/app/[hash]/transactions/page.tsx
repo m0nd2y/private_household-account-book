@@ -79,12 +79,6 @@ interface Category {
   color?: string | null
 }
 
-interface PaymentMethod {
-  id: string
-  name: string
-  type: string
-}
-
 interface Tag {
   id: string
   name: string
@@ -100,7 +94,7 @@ interface Transaction {
   categoryId: string
   category: Category
   paymentMethodId?: string | null
-  paymentMethod?: PaymentMethod | null
+  paymentMethod?: { id: string; name: string; type: string } | null
   tags: Tag[]
   createdAt: string
   updatedAt: string
@@ -129,7 +123,7 @@ const ITEMS_PER_PAGE = 20
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [categories, setCategories] = useState<Category[]>([])
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([])
+  const [lastTransactionDate, setLastTransactionDate] = useState<Date | undefined>(undefined)
   const [total, setTotal] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -145,6 +139,21 @@ export default function TransactionsPage() {
     endDate: undefined,
     keyword: "",
   })
+
+  // Fetch last transaction date for default date in create form
+  const fetchLastTransactionDate = useCallback(async () => {
+    try {
+      const res = await fetch("/api/transactions?page=1&limit=1")
+      if (res.ok) {
+        const data: TransactionsResponse = await res.json()
+        if (data.data.length > 0) {
+          setLastTransactionDate(new Date(data.data[0].date))
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, [])
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
@@ -195,17 +204,10 @@ export default function TransactionsPage() {
 
   const fetchMeta = useCallback(async () => {
     try {
-      const [catRes, pmRes] = await Promise.all([
-        fetch("/api/categories"),
-        fetch("/api/payment-methods"),
-      ])
+      const catRes = await fetch("/api/categories")
       if (catRes.ok) {
         const catData = await catRes.json()
         setCategories(Array.isArray(catData) ? catData : [])
-      }
-      if (pmRes.ok) {
-        const pmData = await pmRes.json()
-        setPaymentMethods(Array.isArray(pmData) ? pmData : [])
       }
     } catch (error) {
       console.error("Failed to fetch metadata:", error)
@@ -214,7 +216,8 @@ export default function TransactionsPage() {
 
   useEffect(() => {
     fetchMeta()
-  }, [fetchMeta])
+    fetchLastTransactionDate()
+  }, [fetchMeta, fetchLastTransactionDate])
 
   useEffect(() => {
     fetchTransactions()
@@ -242,6 +245,7 @@ export default function TransactionsPage() {
       toast.success("거래가 등록되었습니다")
       setCreateDialogOpen(false)
       fetchTransactions()
+      fetchLastTransactionDate()
     } catch (error) {
       console.error("Failed to create transaction:", error)
       toast.error("거래 등록에 실패했습니다")
@@ -441,27 +445,6 @@ export default function TransactionsPage() {
               </Select>
             </div>
 
-            {/* Payment Method Filter */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">결제수단</label>
-              <Select
-                value={filters.paymentMethodId}
-                onValueChange={(val) => updateFilter("paymentMethodId", val)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="전체" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">전체</SelectItem>
-                  {paymentMethods.map((pm) => (
-                    <SelectItem key={pm.id} value={pm.id}>
-                      {pm.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
             {/* Keyword Search */}
             <div className="space-y-2 sm:col-span-2 lg:col-span-3">
               <label className="text-sm font-medium">키워드 검색</label>
@@ -546,7 +529,6 @@ export default function TransactionsPage() {
                       <TableHead className="w-[80px]">유형</TableHead>
                       <TableHead>카테고리</TableHead>
                       <TableHead>설명</TableHead>
-                      <TableHead>결제수단</TableHead>
                       <TableHead className="text-right">금액</TableHead>
                       <TableHead className="w-[50px]" />
                     </TableRow>
@@ -578,9 +560,6 @@ export default function TransactionsPage() {
                         </TableCell>
                         <TableCell className="max-w-[200px] truncate">
                           {tx.description || "-"}
-                        </TableCell>
-                        <TableCell>
-                          {tx.paymentMethod?.name || "-"}
                         </TableCell>
                         <TableCell
                           className={cn(
@@ -661,7 +640,6 @@ export default function TransactionsPage() {
                       </p>
                       <p className="mt-0.5 text-xs text-muted-foreground">
                         {formatDate(tx.date)}
-                        {tx.paymentMethod && ` | ${tx.paymentMethod.name}`}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 ml-4">
@@ -769,6 +747,7 @@ export default function TransactionsPage() {
             </DialogDescription>
           </DialogHeader>
           <TransactionForm
+            defaultDate={lastTransactionDate}
             onSubmit={handleCreate}
             onCancel={() => setCreateDialogOpen(false)}
             isLoading={submitting}
